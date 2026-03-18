@@ -5,8 +5,9 @@ public class PlayScene : Scene
 {
     public event GameAction PlayAgainRequested;
     private Map1 map1;
-    private Bullet bullet;
     private Player player;
+    private const float k_shootInterval = 0.2f;
+    private float _shootTimer;
     public override void Load()
     {
         map1 = new Map1(this);
@@ -15,6 +16,7 @@ public class PlayScene : Scene
         player = new Player(this, 20, 10);
         AddGameObject(player);
 
+        _shootTimer = 0;
     }
 
     public override void Unload()
@@ -25,7 +27,12 @@ public class PlayScene : Scene
     public override void Update(float deltaTime)
     {
         UpdateGameObjects(deltaTime);
-        BulletFire();
+        _shootTimer += deltaTime;
+        if (_shootTimer > k_shootInterval)
+        {
+            BulletFire();
+            _shootTimer = 0;
+        }
     }
     public override void Draw(ScreenBuffer buffer)
     {
@@ -33,35 +40,54 @@ public class PlayScene : Scene
     }
     public void BulletFire()
     {
-        if (Input.IsKeyDown(ConsoleKey.Spacebar))
+        if (Input.IsKey(ConsoleKey.Spacebar))
         {
             int x = player.PlayerBody.X;
             int y = player.PlayerBody.Y;
 
-            switch (player.Direction) // 캐릭터 방향, 총구 위치에 맞게 조정
+            int dx = 0;
+            int dy = 0;
+
+            switch (player.Direction)
             {
-                case Direction.Down:
-                    x = x - 1;
-                    y = y + 1;
+                case Direction.Up:
+                    dx = 0; dy = -1;
+                    x += 1; y -= 1;
                     break;
 
-                case Direction.Up:
-                    x = x + 2;
-                    y = y - 1;
+                case Direction.Down:
+                    dx = 0; dy = 1;
+                    x -= 1; y += 1;
                     break;
 
                 case Direction.Left:
-                    x = x - 2;
-                    y = y - 1;
+                    dx = -1; dy = 0;
+                    x -= 2; y -= 1;
                     break;
 
                 case Direction.Right:
-                    x = x + 2;
-                    y = y + 1;
+                    dx = 1; dy = 0;
+                    x += 2; y += 1;
+                    break;
+                case Direction.UpLeft:
+                    dx = -1; dy = -1;
+                    x -= 2; y -= 1;
+                    break;
+                case Direction.UpRight:
+                    dx = 1; dy = -1;
+                    x += 1; y -= 1;
+                    break;
+                case Direction.DownRight:
+                    dx = 1; dy = 1;
+                    x += 2; y += 1;
+                    break;
+                case Direction.DownLeft:
+                    dx = -1; dy = 1;
+                    x -= 1; y += 1;
                     break;
             }
 
-            Bullet bullet = new Bullet(this, x, y, player.Direction);
+            var bullet = new Bullet(this, x, y, dx, dy);
             AddGameObject(bullet);
         }
     }
