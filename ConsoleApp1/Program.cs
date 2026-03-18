@@ -1,1 +1,4 @@
-﻿new ShootingGame().Run();
+﻿using System.Text;
+
+Console.OutputEncoding = Encoding.UTF8;
+new ShootingGame().Run();
