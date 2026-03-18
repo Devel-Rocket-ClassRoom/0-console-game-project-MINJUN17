@@ -26,7 +26,18 @@ public class Player : GameObject
     }
     public override void Draw(ScreenBuffer buffer)
     {
-        buffer.SetCell(_playerBody.X, _playerBody.Y, 'P', ConsoleColor.Yellow);
+        int x = _playerBody.X;
+        int y = _playerBody.Y;
+
+        buffer.SetCell(x, y, 'O', ConsoleColor.Yellow);
+        buffer.SetCell(x + 1, y, '-', ConsoleColor.Yellow);
+        buffer.SetCell(x + 2, y, '>', ConsoleColor.Yellow);
+
+        buffer.SetCell(x - 1, y + 1, '/', ConsoleColor.Yellow);
+        buffer.SetCell(x, y + 1, '|', ConsoleColor.Yellow);
+
+        buffer.SetCell(x - 1, y + 2, '/', ConsoleColor.Yellow);
+        buffer.SetCell(x + 1, y + 2, '\\', ConsoleColor.Yellow);
     }
     private void Move()
     {
