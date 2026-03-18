@@ -7,15 +7,17 @@ public class Player : GameObject
 {
     private const float k_MoveInterval = 0.1f;
     private (int X, int Y) _playerBody;
+    private Scene _scene;
+    public (int X, int Y) PlayerBody => _playerBody;
     private float _moveTimer;
-    private Direction _direction;
+    public Direction Direction;
     public Player(Scene scene, int startX, int startY) : base(scene)
     {
         Name = "Player";
 
         _playerBody = (startX, startY);
         _moveTimer = 0;
-        _direction = Direction.Up;
+        Direction = Direction.Up;
     }
     public override void Update(float deltaTime)
     {
@@ -31,42 +33,36 @@ public class Player : GameObject
         int x = _playerBody.X;
         int y = _playerBody.Y;
         //┏ ┓ ┗ ┛
-        if (_direction == Direction.Down)
+        if (Direction == Direction.Down)
         {
             buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
-            //buffer.SetCell(x + 2, y, '┓', ConsoleColor.Yellow);
             buffer.SetCell(x - 1, y, '┏', ConsoleColor.Yellow);
             buffer.SetCell(x - 1, y + 1, '┼', ConsoleColor.Yellow);
         }
-        else if (_direction == Direction.Up)
+        else if (Direction == Direction.Up)
         {
             buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 2, y, '┛', ConsoleColor.Yellow);
-            //buffer.SetCell(x - 1, y, '┗', ConsoleColor.Yellow);
             buffer.SetCell(x + 2, y - 1, '┼', ConsoleColor.Yellow);
         }
-        else if( _direction == Direction.Left)
+        else if( Direction == Direction.Left)
         {
             buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x - 1, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x, y - 1, '┓', ConsoleColor.Yellow);
-            //buffer.SetCell(x, y + 1, '┛', ConsoleColor.Yellow);
             buffer.SetCell(x -1, y - 1, '━', ConsoleColor.Yellow);
-            //buffer.SetCell(x - 1, y + 1, '━', ConsoleColor.Yellow);
             buffer.SetCell(x - 2, y - 1, '┼', ConsoleColor.Yellow);
             buffer.SetCell(x - 3, y - 1, '─', ConsoleColor.Yellow);
         }
-        else if (_direction == Direction.Right)
+        else if (Direction == Direction.Right)
         {
             buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
 
-            //buffer.SetCell(x, y - 1, '┏', ConsoleColor.Yellow);
             buffer.SetCell(x, y + 1, '┗', ConsoleColor.Yellow);
 
-            //buffer.SetCell(x + 1, y - 1, '━', ConsoleColor.Yellow);
             buffer.SetCell(x + 1, y + 1, '━', ConsoleColor.Yellow);
 
             buffer.SetCell(x + 3, y + 1, '─', ConsoleColor.Yellow);
@@ -75,26 +71,33 @@ public class Player : GameObject
     }
     private void Move()
     {
+        int nextX = _playerBody.X;
+        int nextY = _playerBody.Y;
         if (Input.IsKey(ConsoleKey.UpArrow))
         {
-            _playerBody.Y -= 1;
-            _direction = Direction.Up;
+            nextY -= 1;
+            Direction = Direction.Up;
         }
         if (Input.IsKey(ConsoleKey.DownArrow))
         {
-            _playerBody.Y += 1;
-            _direction = Direction.Down;
+            nextY += 1;
+            Direction = Direction.Down;
         }
         if (Input.IsKey(ConsoleKey.LeftArrow))
         {
-            _playerBody.X -= 1;
-            _direction = Direction.Left;
+            nextX -= 1;
+            Direction = Direction.Left;
         }
         if (Input.IsKey(ConsoleKey.RightArrow))
         {
-            _playerBody.X += 1;
-            _direction = Direction.Right;
+            nextX += 1;
+            Direction = Direction.Right;
         }
-
+        if(!Map1.IsInBounds(nextX, nextY))
+        {
+            return;
+        }
+        _playerBody.X = nextX;
+        _playerBody.Y = nextY;
     }
 }

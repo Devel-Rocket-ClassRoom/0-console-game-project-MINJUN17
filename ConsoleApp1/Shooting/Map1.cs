@@ -20,7 +20,7 @@ public class Map1 : GameObject
     {
         buffer.DrawBox(Left - 1, Top - 1, Right - Left + 3, Bottom - Top + 3, ConsoleColor.White);
     }
-    public bool IsInBounds(int x, int y)
+    public static bool IsInBounds(int x, int y)
     {
         return x >= Left && x <= Right && y >= Top && y <= Bottom;
     }
