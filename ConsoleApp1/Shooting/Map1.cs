@@ -19,8 +19,6 @@ public class Map1 : GameObject
     public override void Draw(ScreenBuffer buffer)
     {
         buffer.DrawBox(Left - 1, Top - 1, Right - Left + 3, Bottom - Top + 3, ConsoleColor.White);
-        buffer.WriteTextCentered(Top - 1, "          ");
-        buffer.WriteTextCentered(Bottom - Top + 4, "          ");
     }
     public bool IsInBounds(int x, int y)
     {
