@@ -1,1 +1,1 @@
-﻿Console.WriteLine("Hello, World!");
+﻿new ShootingGame().Run();
