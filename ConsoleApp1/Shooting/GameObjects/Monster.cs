@@ -75,7 +75,7 @@ public class Monster : GameObject
             else if (spawn < 3)
             {
                 _monsterPostion.X = _random.Next(Map1.Left, Map1.Right + 1);
-                _monsterPostion.Y = Map1.Bottom - 4;
+                _monsterPostion.Y = Map1.Bottom - 2;
             }
             else
             {
@@ -90,11 +90,11 @@ public class Monster : GameObject
         return position.X >= _monsterPostion.X && position.X < _monsterPostion.X + _monsterWidth &&
            position.Y >= _monsterPostion.Y && position.Y < _monsterPostion.Y + _monsterHeight;
     }
-    public bool IsHit(Position bulletPos)
+    public bool IsHit(Position position)
     {
-        return bulletPos.X >= _monsterPostion.X
-            && bulletPos.X < _monsterPostion.X + _monsterWidth
-            && bulletPos.Y >= _monsterPostion.Y
-            && bulletPos.Y < _monsterPostion.Y + _monsterHeight;
+        return position.X >= _monsterPostion.X
+            && position.X < _monsterPostion.X + _monsterWidth
+            && position.Y >= _monsterPostion.Y
+            && position.Y < _monsterPostion.Y + _monsterHeight;
     }
 }

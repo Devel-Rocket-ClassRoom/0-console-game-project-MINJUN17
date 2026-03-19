@@ -62,7 +62,7 @@ public class PlayScene : Scene
         }
         foreach (var monster in monsters)
         {
-            if(monster.MonsterPosition == player.PlayerPosition)
+            if(monster.IsHit(player.PlayerPosition))
             {
                 isGameOver = true;
                 return;
@@ -85,6 +85,7 @@ public class PlayScene : Scene
     public override void Draw(ScreenBuffer buffer)
     {
         buffer.WriteText(0, 0, $"Gold: {_Gold}G", ConsoleColor.Yellow);
+        buffer.WriteTextCentered(0, $"현재무기 : {player.Weapon}");
         DrawGameObjects(buffer);
         if (isGameOver)
         {

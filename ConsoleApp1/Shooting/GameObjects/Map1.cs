@@ -18,7 +18,7 @@ public class Map1 : GameObject
 
     public override void Draw(ScreenBuffer buffer)
     {
-        buffer.DrawBox(Left - 1, Top - 1, Right - Left + 2, Bottom - Top + 4, ConsoleColor.White);
+        buffer.DrawBox(Left - 1, Top - 1, Right - Left + 2, Bottom - Top + 3, ConsoleColor.White);
     }
     public static bool IsInBounds(int x, int y)
     {
