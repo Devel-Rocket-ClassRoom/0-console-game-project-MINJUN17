@@ -4,16 +4,18 @@ using System.Numerics;
 
 public class PlayScene : Scene
 {
-    public event GameAction PlayAgainRequested;
     private Map1 map1;
     public Player player { get; private set; }
+    private RifleItem rifleItem;
     private List<Monster> monsters = new List<Monster>();
-    private bool isGameOver;
     private List<Bullet> bullets = new List<Bullet>();
+
+    private bool isGameOver;
     private const float k_shootInterval = 0.2f;
     private float _shootTimer;
     private Random _random = new Random();
     private int _Gold;
+    public event GameAction PlayAgainRequested;
     public override void Load()
     {
         isGameOver = false;
@@ -25,6 +27,10 @@ public class PlayScene : Scene
         Position startPosition = new Position(20, 10);
         player = new Player(this, startPosition);
         AddGameObject(player);
+
+        rifleItem = new RifleItem(this);
+        rifleItem.Spawn(player);
+        AddGameObject(rifleItem);
 
         _shootTimer = 0;
         player.OnFire = (position, dir) =>
@@ -49,6 +55,11 @@ public class PlayScene : Scene
             return;
         }
         UpdateGameObjects(deltaTime);
+        if(player.PlayerPosition == rifleItem.RiflePosition)
+        {
+            player.SetWeapon(new Rifle());
+            RemoveGameObject(rifleItem);
+        }
         int activeMonsterCount = monsters.Count(m => m.IsActive);
         if (_random.Next(100) < 3 && activeMonsterCount < 7)
         {

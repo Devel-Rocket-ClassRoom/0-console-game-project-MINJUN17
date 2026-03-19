@@ -15,6 +15,7 @@ public class Player : GameObject
     private float _moveTimer;
     private const float k_ShootInterval = 0.25f;
     private float _shootTimer;
+    private Weapon _weapon;
 
     public Action<Position, Direction> OnFire;
     private Scene _scene;
@@ -22,6 +23,7 @@ public class Player : GameObject
     public Player(Scene scene, Position startPosition) : base(scene)
     {
         Name = "Player";
+        _weapon = new Pistol();
         _playerPosition = startPosition;
         _moveTimer = 0;
         _shootTimer = 0;
@@ -30,11 +32,11 @@ public class Player : GameObject
 
     public override void Update(float deltaTime)
     {
-        _shootTimer += deltaTime;
-        if (Input.IsKeyDown(ConsoleKey.Spacebar) && _shootTimer > k_ShootInterval)
+        _weapon.Update(deltaTime);
+        if (Input.IsKey(ConsoleKey.Spacebar) && _weapon.CanFire())
         {
-            OnFire?.Invoke(PlayerPosition, CurrentDirection);
-            _shootTimer = 0f;
+            _weapon.Fire((PlayScene)Scene, PlayerPosition, CurrentDirection);
+            _weapon.ResetTimer();
         }
         _moveTimer += deltaTime;
         if (_moveTimer > k_MoveInterval)
@@ -116,5 +118,9 @@ public class Player : GameObject
             return;
         }
         _playerPosition = nextPosition;
+    }
+    public void SetWeapon(Weapon weapon)
+    {
+        _weapon = weapon;
     }
 }
