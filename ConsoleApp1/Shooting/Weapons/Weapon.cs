@@ -22,5 +22,13 @@ public abstract class Weapon
         _timer = 0;
     }
 
+    public void TryFire(PlayScene scene, Position pos, Direction dir)
+    {
+        if (!CanFire()) return;
+
+        Fire(scene, pos, dir);
+        ResetTimer();
+    }
+
     public abstract void Fire(PlayScene scene, Position pos, Direction dir);
 }

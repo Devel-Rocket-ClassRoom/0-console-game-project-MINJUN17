@@ -18,7 +18,6 @@ public class Player : GameObject
     private Weapon _weapon;
 
     public Action<Position, Direction> OnFire;
-    private Scene _scene;
 
     public Player(Scene scene, Position startPosition) : base(scene)
     {
@@ -33,10 +32,9 @@ public class Player : GameObject
     public override void Update(float deltaTime)
     {
         _weapon.Update(deltaTime);
-        if (Input.IsKey(ConsoleKey.Spacebar) && _weapon.CanFire())
+        if (Input.IsKey(ConsoleKey.Spacebar))
         {
-            _weapon.Fire((PlayScene)Scene, PlayerPosition, CurrentDirection);
-            _weapon.ResetTimer();
+            _weapon.TryFire((PlayScene)Scene, PlayerPosition, CurrentDirection);
         }
         _moveTimer += deltaTime;
         if (_moveTimer > k_MoveInterval)

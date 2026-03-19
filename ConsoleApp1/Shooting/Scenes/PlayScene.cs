@@ -11,8 +11,6 @@ public class PlayScene : Scene
     private List<Bullet> bullets = new List<Bullet>();
 
     private bool isGameOver;
-    private const float k_shootInterval = 0.2f;
-    private float _shootTimer;
     private Random _random = new Random();
     private int _Gold;
     public event GameAction PlayAgainRequested;
@@ -31,12 +29,6 @@ public class PlayScene : Scene
         rifleItem = new RifleItem(this);
         rifleItem.Spawn(player);
         AddGameObject(rifleItem);
-
-        _shootTimer = 0;
-        player.OnFire = (position, dir) =>
-        {
-            CreateBullet(position, dir);
-        };
     }
 
     public override void Unload()
