@@ -7,15 +7,14 @@ public class Bullet : GameObject
     private Direction _direction;
     private const float k_MoveInterval = 0.01f;
     private float _moveTimer;
-    private (int X, int Y) _bulletPosition;
-    private int _dx;
-    private int _dy;
+    private Position _bulletPosition;
+    public Position BulletPosition => _bulletPosition;
+    public Direction Direction { get; }
     public bool IsAlive { get; private set; }
-    public Bullet(Scene scene, int x, int y, int dx, int dy) : base(scene)
+    public Bullet(Scene scene, Position postion, Direction direction) : base(scene)
     {
-        _bulletPosition = (x, y);
-        _dx = dx;
-        _dy = dy;
+        _bulletPosition = postion;
+        Direction = direction;
 
         _moveTimer = 0;
         IsAlive = true;
@@ -38,12 +37,23 @@ public class Bullet : GameObject
     }
     public void Move()
     {
-        int nextX = _bulletPosition.X + _dx;
-        int nextY = _bulletPosition.Y + _dy;
+        int dx = 0;
+        int dy = 0;
 
-        _bulletPosition = (nextX, nextY);
-
-        if (!Map1.IsInBounds(nextX, nextY))
+        switch (Direction)
+        {
+            case Direction.Up: dx = 0; dy = -1; break;
+            case Direction.Down: dx = 0; dy = 1; break;
+            case Direction.Left: dx = -1; dy = 0; break;
+            case Direction.Right: dx = 1; dy = 0; break;
+            case Direction.UpLeft: dx = -1; dy = -1; break;
+            case Direction.UpRight: dx = 1; dy = -1; break;
+            case Direction.DownRight: dx = 1; dy = 1; break;
+            case Direction.DownLeft: dx = -1; dy = 1; break;
+        }
+        _bulletPosition.X += dx;
+        _bulletPosition.Y += dy;
+        if (!Map1.IsInBounds(_bulletPosition.X, _bulletPosition.Y))
         {
             IsAlive = false;
         }
@@ -52,5 +62,4 @@ public class Bullet : GameObject
     {
         buffer.SetCell(_bulletPosition.X, _bulletPosition.Y, '•', ConsoleColor.Gray);
     }
-
 }

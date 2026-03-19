@@ -1,22 +1,36 @@
-﻿using System;
-using Framework.Engine;
+﻿using Framework.Engine;
+using System;
+using System.Numerics;
 
 public class PlayScene : Scene
 {
     public event GameAction PlayAgainRequested;
     private Map1 map1;
-    private Player player;
+    public Player player { get; private set; }
+    private List<Monster> monsters = new List<Monster>();
+    private bool isGameOver;
+    private List<Bullet> bullets = new List<Bullet>();
     private const float k_shootInterval = 0.2f;
     private float _shootTimer;
+    private Random _random = new Random();
+    private int _Gold;
     public override void Load()
     {
+        isGameOver = false;
+        _Gold = 0;
+
         map1 = new Map1(this);
         AddGameObject(map1);
 
-        player = new Player(this, 20, 10);
+        Position startPosition = new Position(20, 10);
+        player = new Player(this, startPosition);
         AddGameObject(player);
 
         _shootTimer = 0;
+        player.OnFire = (position, dir) =>
+        {
+            CreateBullet(position, dir);
+        };
     }
 
     public override void Unload()
@@ -26,69 +40,59 @@ public class PlayScene : Scene
 
     public override void Update(float deltaTime)
     {
-        UpdateGameObjects(deltaTime);
-        _shootTimer += deltaTime;
-        if (_shootTimer > k_shootInterval)
+        if (isGameOver)
         {
-            BulletFire();
-            _shootTimer = 0;
+            if (Input.IsKeyDown(ConsoleKey.Enter))
+            {
+                PlayAgainRequested?.Invoke();
+            }
+            return;
         }
+        UpdateGameObjects(deltaTime);
+        int activeMonsterCount = monsters.Count(m => m.IsActive);
+        if (_random.Next(100) < 3 && activeMonsterCount < 7)
+        {
+            var monster = new Monster(this, player, monsters);
+            monster.Spawn(player.PlayerPosition);
+            monsters.Add(monster);
+            AddGameObject(monster);
+        }
+        foreach (var monster in monsters)
+        {
+            if(monster.MonsterPosition == player.PlayerPosition)
+            {
+                isGameOver = true;
+                return;
+            }
+            foreach (var bullet in bullets)
+            {
+                if (monster.IsHit(bullet.BulletPosition)) 
+                {
+                    monster.IsActive = false;
+                    RemoveGameObject(monster);
+                    bullet.IsActive = false;
+                    RemoveGameObject(bullet);
+                    _Gold += 10;
+                }
+            }
+        }
+        monsters.RemoveAll(m => !m.IsActive);
+        bullets.RemoveAll(m => !m.IsActive);
     }
     public override void Draw(ScreenBuffer buffer)
     {
+        buffer.WriteText(0, 0, $"Gold: {_Gold}G", ConsoleColor.Yellow);
         DrawGameObjects(buffer);
-    }
-    public void BulletFire()
-    {
-        if (Input.IsKey(ConsoleKey.Spacebar))
+        if (isGameOver)
         {
-            int x = player.PlayerBody.X;
-            int y = player.PlayerBody.Y;
-
-            int dx = 0;
-            int dy = 0;
-
-            switch (player.Direction)
-            {
-                case Direction.Up:
-                    dx = 0; dy = -1;
-                    x += 1; y -= 1;
-                    break;
-
-                case Direction.Down:
-                    dx = 0; dy = 1;
-                    x -= 1; y += 1;
-                    break;
-
-                case Direction.Left:
-                    dx = -1; dy = 0;
-                    x -= 2; y -= 1;
-                    break;
-
-                case Direction.Right:
-                    dx = 1; dy = 0;
-                    x += 2; y += 1;
-                    break;
-                case Direction.UpLeft:
-                    dx = -1; dy = -1;
-                    x -= 2; y -= 1;
-                    break;
-                case Direction.UpRight:
-                    dx = 1; dy = -1;
-                    x += 1; y -= 1;
-                    break;
-                case Direction.DownRight:
-                    dx = 1; dy = 1;
-                    x += 2; y += 1;
-                    break;
-                case Direction.DownLeft:
-                    dx = -1; dy = 1;
-                    x -= 1; y += 1;
-                    break;
-            }
-
-            var bullet = new Bullet(this, x, y, dx, dy);
-            AddGameObject(bullet);
+            buffer.WriteTextCentered(13, $"GAME OVER", ConsoleColor.Red);
+            buffer.WriteTextCentered(15, "Press ENTER to Retry", ConsoleColor.White);
         }
+    }
+    public void CreateBullet(Position body, Direction dir)
+    {
+        var bullet = new Bullet(this, body, dir);
+        bullets.Add(bullet);
+        AddGameObject(bullet);
     }
 }

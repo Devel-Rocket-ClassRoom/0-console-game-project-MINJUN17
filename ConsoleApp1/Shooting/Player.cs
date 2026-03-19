@@ -1,99 +1,120 @@
 ﻿using Framework.Engine;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 public class Player : GameObject
 {
+    private Position _playerPosition;
+    public Position PlayerPosition => _playerPosition;
+    public Direction CurrentDirection { get; private set; }
+
     private const float k_MoveInterval = 0.1f;
-    private (int X, int Y) _playerBody;
-    private Scene _scene;
-    public (int X, int Y) PlayerBody => _playerBody;
     private float _moveTimer;
-    public Direction Direction;
-    public Player(Scene scene, int startX, int startY) : base(scene)
+    private const float k_ShootInterval = 0.25f;
+    private float _shootTimer;
+
+    public Action<Position, Direction> OnFire;
+    private Scene _scene;
+
+    public Player(Scene scene, Position startPosition) : base(scene)
     {
         Name = "Player";
-
-        _playerBody = (startX, startY);
+        _playerPosition = startPosition;
         _moveTimer = 0;
-        Direction = Direction.Up;
+        _shootTimer = 0;
+        CurrentDirection = Direction.Up;
     }
+
     public override void Update(float deltaTime)
     {
+        _shootTimer += deltaTime;
+        if (Input.IsKeyDown(ConsoleKey.Spacebar) && _shootTimer > k_ShootInterval)
+        {
+            OnFire?.Invoke(PlayerPosition, CurrentDirection);
+            _shootTimer = 0f;
+        }
         _moveTimer += deltaTime;
         if (_moveTimer > k_MoveInterval)
         {
             Move();
             _moveTimer = 0f;
         }
+        
     }
+
     public override void Draw(ScreenBuffer buffer)
     {
-        int x = _playerBody.X;
-        int y = _playerBody.Y;
-        if (Direction == Direction.Down || Direction == Direction.DownLeft)
+        int x = _playerPosition.X;
+        int y = _playerPosition.Y;
+        if (CurrentDirection == Direction.Down || CurrentDirection == Direction.DownLeft)
         {
-            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y, '┏', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y + 1, '┼', ConsoleColor.Yellow);
-        }
-        else if (Direction == Direction.Up || Direction == Direction.UpRight)
-        {
-            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 2, y, '┛', ConsoleColor.Yellow);
-            buffer.SetCell(x + 2, y - 1, '┼', ConsoleColor.Yellow);
-        }
-        else if( Direction == Direction.Left || Direction == Direction.UpLeft)
-        {
-            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x, y - 1, '┓', ConsoleColor.Yellow);
-            buffer.SetCell(x -1, y - 1, '━', ConsoleColor.Yellow);
-            buffer.SetCell(x - 2, y - 1, '┼', ConsoleColor.Yellow);
-            buffer.SetCell(x - 3, y - 1, '─', ConsoleColor.Yellow);
-        }
-        else if (Direction == Direction.Right || Direction == Direction.DownRight)
-        {
-            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow); 
+            buffer.SetCell(x + 2, y, '█', ConsoleColor.Yellow);  
 
-            buffer.SetCell(x, y + 1, '┗', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '┏', ConsoleColor.Yellow);   
+            buffer.SetCell(x, y + 1, '┼', ConsoleColor.Yellow);
+        }
+        else if (CurrentDirection == Direction.Up || CurrentDirection == Direction.UpRight)
+        {
+            buffer.SetCell(x - 2, y, '█', ConsoleColor.Yellow);   
+            buffer.SetCell(x - 1, y, '█', ConsoleColor.Yellow);    
 
-            buffer.SetCell(x + 1, y + 1, '━', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '┛', ConsoleColor.Yellow);     
+            buffer.SetCell(x, y - 1, '┼', ConsoleColor.Yellow);
+        }
+        else if( CurrentDirection == Direction.Left || CurrentDirection == Direction.UpLeft)
+        {
+            buffer.SetCell(x, y+ 1, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x - 1, y +1, '█', ConsoleColor.Yellow);
 
-            buffer.SetCell(x + 3, y + 1, '─', ConsoleColor.Yellow);
-            buffer.SetCell(x + 2, y + 1, '┼', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '┓', ConsoleColor.Yellow);
+            buffer.SetCell(x -1, y, '━', ConsoleColor.Yellow);
+
+            buffer.SetCell(x - 2, y, '┼', ConsoleColor.Yellow);
+            buffer.SetCell(x - 3, y, '─', ConsoleColor.Yellow);
+        }
+        else if (CurrentDirection == Direction.Right || CurrentDirection == Direction.DownRight)
+        {
+            buffer.SetCell(x, y - 1, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y - 1, '█', ConsoleColor.Yellow);
+
+            buffer.SetCell(x, y, '┗', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '━', ConsoleColor.Yellow);
+
+            buffer.SetCell(x + 3, y, '─', ConsoleColor.Yellow);
+            buffer.SetCell(x + 2, y, '┼', ConsoleColor.Yellow);
         }
     }
+
     private void Move()
     {
         int dx = 0;
         int dy = 0;
 
-        if (Input.IsKey(ConsoleKey.LeftArrow)) dx--;
+        if (Input.IsKey(ConsoleKey.LeftArrow))  dx--;
         if (Input.IsKey(ConsoleKey.RightArrow)) dx++;
-        if (Input.IsKey(ConsoleKey.UpArrow)) dy--;
-        if (Input.IsKey(ConsoleKey.DownArrow)) dy++;
+        if (Input.IsKey(ConsoleKey.UpArrow))    dy--;
+        if (Input.IsKey(ConsoleKey.DownArrow))  dy++;
 
-        // 방향 설정
-        if (dx == -1 && dy == -1) Direction = Direction.UpLeft;
-        else if (dx == 1 && dy == -1) Direction = Direction.UpRight;
-        else if (dx == -1 && dy == 1) Direction = Direction.DownLeft;
-        else if (dx == 1 && dy == 1) Direction = Direction.DownRight;
-        else if (dx == 0 && dy == -1) Direction = Direction.Up;
-        else if (dx == 0 && dy == 1) Direction = Direction.Down;
-        else if (dx == -1 && dy == 0) Direction = Direction.Left;
-        else if (dx == 1 && dy == 0) Direction = Direction.Right;
+        if      (dx == -1 && dy == -1)  CurrentDirection = Direction.UpLeft;
+        else if (dx == 1 && dy == -1)   CurrentDirection = Direction.UpRight;
+        else if (dx == -1 && dy == 1)   CurrentDirection = Direction.DownLeft;
+        else if (dx == 1 && dy == 1)    CurrentDirection = Direction.DownRight;
+        else if (dx == 0 && dy == -1)   CurrentDirection = Direction.Up;
+        else if (dx == 0 && dy == 1)    CurrentDirection = Direction.Down;
+        else if (dx == -1 && dy == 0)   CurrentDirection = Direction.Left;
+        else if (dx == 1 && dy == 0)    CurrentDirection = Direction.Right;
 
-        int nextX = _playerBody.X + dx;
-        int nextY = _playerBody.Y + dy;
-
+        int nextX = _playerPosition.X + dx;
+        int nextY = _playerPosition.Y + dy;
+        Position nextPosition = new Position(nextX, nextY);
         if (!Map1.IsInBounds(nextX, nextY))
+        {
             return;
-
-        _playerBody = (nextX, nextY);
+        }
+        _playerPosition = nextPosition;
     }
 }
