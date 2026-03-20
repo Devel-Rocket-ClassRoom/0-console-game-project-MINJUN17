@@ -24,8 +24,8 @@ public class RifleItem : GameObject
     {
         do
         {
-            _riflePosition.X = _random.Next(Map1.Left, Map1.Right + 1);
-            _riflePosition.Y = _random.Next(Map1.Top, Map1.Bottom + 1);
+            _riflePosition.X = _random.Next(Map.Left, Map.Right + 1);
+            _riflePosition.Y = _random.Next(Map.Top, Map.Bottom + 1);
         }
         while (player.PlayerPosition == _riflePosition);
     }

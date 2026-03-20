@@ -11,17 +11,28 @@ public class Player : GameObject
     public Position PlayerPosition => _playerPosition;
     public Direction CurrentDirection { get; private set; }
 
-    private const float k_MoveInterval = 0.1f;
+    private float _basemoveInterval = 0.1f;
+    private float _currentMoveInterval;
     private float _moveTimer;
+    private float _speedBuffTimer;
     public Weapon Weapon { get; private set; }
+    private Scene Scene;
 
     public Action<Position, Direction> OnFire;
-    public static int Gold { get; private set; }
+    public int Gold { get; private set; }
+
+    public bool HasRifle {  get; private set; }
+    public bool HasShotgun {  get; private set; }
+    public bool HasMoveFast { get; private set; }
 
     public Player(Scene scene, Position startPosition) : base(scene)
     {
         Name = "Player";
+        _speedBuffTimer = 0;
         Gold = 0;
+        HasRifle = false;
+        HasShotgun = false;
+        HasMoveFast = false;
         Weapon = new Pistol();
         _playerPosition = startPosition;
         _moveTimer = 0;
@@ -35,8 +46,18 @@ public class Player : GameObject
         {
             Weapon.TryFire((PlayScene)Scene, PlayerPosition, CurrentDirection);
         }
+
+        if (_speedBuffTimer > 0)
+        {
+            _speedBuffTimer -= deltaTime;
+
+            if (_speedBuffTimer <= 0)
+            {
+                _currentMoveInterval = _basemoveInterval;
+            }
+        }
         _moveTimer += deltaTime;
-        if (_moveTimer > k_MoveInterval)
+        if (_moveTimer > _currentMoveInterval)
         {
             Move();
             _moveTimer = 0f;
@@ -48,7 +69,7 @@ public class Player : GameObject
     {
         int x = _playerPosition.X;
         int y = _playerPosition.Y;
-        if (CurrentDirection == Direction.Down || CurrentDirection == Direction.DownLeft)
+        if (CurrentDirection == Direction.Down)
         {
             buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 2, y, '█', ConsoleColor.Yellow);
@@ -57,7 +78,7 @@ public class Player : GameObject
             buffer.SetCell(x, y + 1, '┼', ConsoleColor.DarkGray);
 
         }
-        else if (CurrentDirection == Direction.Up || CurrentDirection == Direction.UpRight)
+        else if (CurrentDirection == Direction.Up)
         {
             buffer.SetCell(x - 2, y, '█', ConsoleColor.Yellow);
             buffer.SetCell(x - 1, y, '█', ConsoleColor.Yellow);
@@ -65,7 +86,7 @@ public class Player : GameObject
             buffer.SetCell(x, y, '┛', ConsoleColor.Yellow);
             buffer.SetCell(x, y - 1, '┼', ConsoleColor.DarkGray);
         }
-        else if (CurrentDirection == Direction.Left || CurrentDirection == Direction.UpLeft)
+        else if (CurrentDirection == Direction.Left)
         {
             buffer.SetCell(x, y + 1, '█', ConsoleColor.Yellow);
             buffer.SetCell(x - 1, y + 1, '█', ConsoleColor.Yellow);
@@ -76,7 +97,7 @@ public class Player : GameObject
             buffer.SetCell(x - 2, y, '┼', ConsoleColor.DarkGray);
             buffer.SetCell(x - 3, y, '─', ConsoleColor.DarkGray);
         }
-        else if (CurrentDirection == Direction.Right || CurrentDirection == Direction.DownRight)
+        else if (CurrentDirection == Direction.Right)
         {
             buffer.SetCell(x, y - 1, '█', ConsoleColor.Yellow);
             buffer.SetCell(x + 1, y - 1, '█', ConsoleColor.Yellow);
@@ -99,19 +120,15 @@ public class Player : GameObject
         if (Input.IsKey(ConsoleKey.UpArrow)) dy--;
         if (Input.IsKey(ConsoleKey.DownArrow)) dy++;
 
-        if (dx == -1 && dy == -1) CurrentDirection = Direction.UpLeft;
-        else if (dx == 1 && dy == -1) CurrentDirection = Direction.UpRight;
-        else if (dx == -1 && dy == 1) CurrentDirection = Direction.DownLeft;
-        else if (dx == 1 && dy == 1) CurrentDirection = Direction.DownRight;
-        else if (dx == 0 && dy == -1) CurrentDirection = Direction.Up;
-        else if (dx == 0 && dy == 1) CurrentDirection = Direction.Down;
-        else if (dx == -1 && dy == 0) CurrentDirection = Direction.Left;
-        else if (dx == 1 && dy == 0) CurrentDirection = Direction.Right;
+        if (dx == 0 && dy == -1) CurrentDirection = Direction.Up;
+        if (dx == 0 && dy == 1) CurrentDirection = Direction.Down;
+        if (dx == -1 && dy == 0) CurrentDirection = Direction.Left;
+        if (dx == 1 && dy == 0) CurrentDirection = Direction.Right;
 
         int nextX = _playerPosition.X + dx;
         int nextY = _playerPosition.Y + dy;
         Position nextPosition = new Position(nextX, nextY);
-        if (!Map1.IsInBounds(nextX, nextY))
+        if (!Map.IsInBounds(nextX, nextY))
         {
             return;
         }
@@ -120,13 +137,20 @@ public class Player : GameObject
     public void SetWeapon(Weapon weapon)
     {
         Weapon = weapon;
+        if(weapon is Rifle)
+        {
+            HasRifle = true;
+        }
+        else if (weapon is ShotGun)
+        {
+            HasShotgun = true;
+        }
     }
     public Rect PlayerRect(Direction direction)
     {
         switch (direction)
         {
             case Direction.Up:
-            case Direction.UpRight:
                 return new Rect
                 {
                     X = _playerPosition.X - 2,
@@ -136,7 +160,6 @@ public class Player : GameObject
                 };
 
             case Direction.Down:
-            case Direction.DownLeft:
                 return new Rect
                 {
                     X = _playerPosition.X,
@@ -146,7 +169,6 @@ public class Player : GameObject
                 };
 
             case Direction.Left:
-            case Direction.UpLeft:
                 return new Rect
                 {
                     X = _playerPosition.X - 1,
@@ -156,7 +178,6 @@ public class Player : GameObject
                 };
 
             case Direction.Right:
-            case Direction.DownRight:
                 return new Rect
                 {
                     X = _playerPosition.X,
@@ -180,5 +201,32 @@ public class Player : GameObject
             return;
         }
         Gold -= amount;
+    }
+    public void SetScene(Scene scene)
+    {
+        this.Scene = scene;
+    }
+    public void Reset()
+    {
+        Gold = 0;
+        Weapon = new Pistol();
+        HasRifle = false;
+        HasShotgun = false;
+        HasMoveFast = false;
+    }
+    public void MoveFast(float amount)
+    {
+        _basemoveInterval /= amount;
+        HasMoveFast = true;
+    }
+    public void MoveFast(float amount, float buffTime)
+    {
+        _currentMoveInterval = _basemoveInterval / amount;
+        _speedBuffTimer = buffTime;
+        HasMoveFast = true;
+    }
+    public void SetPosition(Position position)
+    {
+        _playerPosition = position;
     }
 }

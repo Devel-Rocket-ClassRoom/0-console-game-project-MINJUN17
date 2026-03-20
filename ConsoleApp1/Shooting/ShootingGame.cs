@@ -4,6 +4,7 @@ using Framework.Engine;
 class ShootingGame : GameApp
 {
     private readonly SceneManager<Scene> _scenes = new SceneManager<Scene>();
+    public Player player { get; private set; }
     public ShootingGame() : base(60, 30)
     {
 
@@ -14,7 +15,8 @@ class ShootingGame : GameApp
     }
     protected override void Initialize()
     {
-        ChaneToShop();
+        player = new Player(null, new Position(20, 10));
+        ChangeToTitle();
     }
     protected override void Update(float deltaTime)
     {
@@ -30,9 +32,10 @@ class ShootingGame : GameApp
         _scenes.CurrentScene?.Draw(Buffer);
     }
 
-    private void ChaneToShop()
+    private void ChangeToShop()
     {
-        var shop = new ShopScene();
+        var shop = new ShopScene(player);
+        shop.NextStage += ChangeToPlay;
         _scenes.ChangeScene(shop);
     }
     private void ChangeToTitle()
@@ -44,9 +47,9 @@ class ShootingGame : GameApp
 
     private void ChangeToPlay()
     {
-        var play = new PlayScene();
+        var play = new PlayScene(player);
         play.PlayAgainRequested += ChangeToTitle;
-        play.GameClear
+        play.GoShop += ChangeToShop;
         _scenes.ChangeScene(play);
     }
 }

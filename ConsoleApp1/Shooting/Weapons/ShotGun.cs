@@ -5,59 +5,29 @@ using System.Text;
 
 public class ShotGun : Weapon
 {
+    private Position position1;
+    private Position position2;
     public ShotGun()
     {
         _cooldown = 1.0f;
     }
     public override void Fire(PlayScene scene, Position pos, Direction dir)
     {
-        if(dir == Direction.Up)
+        if(dir == Direction.Up || dir == Direction.Down)
         {
             scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir + 2);
-            scene.CreateBullet(pos, dir + 3);
+            position1 = new Position() { X = pos.X - 2, Y = pos.Y};
+            scene.CreateBullet(position1, dir);
+            position2 = new Position() { X = pos.X + 2, Y = pos.Y };
+            scene.CreateBullet(position2, dir);
         }
-        if(dir == Direction.Down)
+        else if(dir == Direction.Left || dir == Direction.Right)
         {
             scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir + 3);
-            scene.CreateBullet(pos, dir + 4);
-        }
-        if (dir == Direction.Left)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir + 4);
-            scene.CreateBullet(pos, dir + 6);
-        }
-        if (dir == Direction.Right)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir + 4);
-            scene.CreateBullet(pos, dir + 6);
-        }
-        if (dir == Direction.DownLeft)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir - 6);
-            scene.CreateBullet(pos, dir - 3);
-        }
-        if (dir == Direction.DownRight)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir - 4);
-            scene.CreateBullet(pos, dir - 6);
-        }
-        if (dir == Direction.UpRight)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir - 3);
-            scene.CreateBullet(pos, dir - 4);
-        }
-        if (dir == Direction.UpLeft)
-        {
-            scene.CreateBullet(pos, dir);
-            scene.CreateBullet(pos, dir - 2);
-            scene.CreateBullet(pos, dir - 4);
+            position1 = new Position() { X = pos.X, Y = pos.Y + 1 };
+            scene.CreateBullet(position1, dir);
+            position2 = new Position() { X = pos.X, Y = pos.Y - 1 };
+            scene.CreateBullet(position2, dir);
         }
     }
 }

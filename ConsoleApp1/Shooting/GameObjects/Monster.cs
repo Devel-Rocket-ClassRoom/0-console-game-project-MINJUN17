@@ -59,7 +59,7 @@ public class Monster : GameObject
         {
             return;
         }
-        if (Map1.IsInBounds(newPosition.X, newPosition.Y))
+        if (Map.IsInBounds(newPosition.X, newPosition.Y))
         {
             _monsterPostion = newPosition;
         }
@@ -69,28 +69,28 @@ public class Monster : GameObject
         do
         {
             int spawn = _random.Next(4);
-            if (spawn < 1)
+            if (spawn == 1)
             {
-                _monsterPostion.X = _random.Next(Map1.Left, Map1.Right + 1);
-                _monsterPostion.Y = Map1.Top + 2;
+                _monsterPostion.X = _random.Next(Map.Left, Map.Right + 1);
+                _monsterPostion.Y = Map.Top;
             }
-            else if(spawn < 2)
+            else if(spawn== 2)
             {
-                _monsterPostion.Y = _random.Next(Map1.Top, Map1.Bottom + 1);
-                _monsterPostion.X = Map1.Left + 2;
+                _monsterPostion.Y = _random.Next(Map.Top, Map.Bottom + 1);
+                _monsterPostion.X = Map.Left;
             }
-            else if (spawn < 3)
+            else if (spawn == 3)
             {
-                _monsterPostion.X = _random.Next(Map1.Left, Map1.Right + 1);
-                _monsterPostion.Y = Map1.Bottom - 2;
+                _monsterPostion.X = _random.Next(Map.Left, Map.Right + 1);
+                _monsterPostion.Y = Map.Bottom - 1;
             }
             else
             {
-                _monsterPostion.Y = _random.Next(Map1.Top, Map1.Bottom + 1);
-                _monsterPostion.X = Map1.Right - 4;
+                _monsterPostion.Y = _random.Next(Map.Top, Map.Bottom + 1);
+                _monsterPostion.X = Map.Right - 4;
             }
         }
-        while(Overlap.IsOverlap(MonsterRect(), rect));
+        while(Overlap.IsOverlap(MonsterRect(), rect) || _others.Any(m => m != this && Overlap.IsOverlap(MonsterRect(), m.MonsterRect())));
     }
 
     public Rect MonsterRect()

@@ -2,36 +2,54 @@
 using System;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 public class PlayScene : Scene
 {
-    private Map1 map1;
-    public Player player { get; private set; }
+    private Map map1;
+    private Player _player;
     private RifleItem rifleItem;
     private List<Monster> monsters = new List<Monster>();
     private List<Bullet> bullets = new List<Bullet>();
+    private List<Item> items = new List<Item>();
 
     private bool isGameOver;
+    private bool isGameClear;
     private float _gameTime;
-    private readonly float _maxTime = 90f;
+    private int WeaponNumber;
+    private readonly float _maxTime = 15f;
     private Random _random = new Random();
     public event GameAction PlayAgainRequested;
-    public event GameAction GoToNextStage;
+    public event GameAction GoShop;
+
+    public PlayScene(Player player)
+    {
+        _player = player;
+    }
     public override void Load()
     {
+        
         _gameTime = 0f;
-        isGameOver = false;
+        WeaponNumber = 1;
+        isGameClear = false;
 
-        map1 = new Map1(this);
+        map1 = new Map(this);
         AddGameObject(map1);
 
-        Position startPosition = new Position(20, 10);
-        player = new Player(this, startPosition);
-        AddGameObject(player);
 
-        rifleItem = new RifleItem(this);
-        rifleItem.Spawn(player);
-        AddGameObject(rifleItem);
+        _player.SetScene(this);
+        if (isGameOver)
+        {
+            _player.Reset();
+            isGameOver = false;
+        }
+
+
+        Position startPosition = new Position(30, 15);
+        _player.SetPosition(startPosition);
+        AddGameObject(_player);
+
+        
     }
 
     public override void Unload()
@@ -50,27 +68,85 @@ public class PlayScene : Scene
             return;
         }
         _gameTime += deltaTime;
-        if( _gameTime >= _maxTime)
+        if(_gameTime >= _maxTime)
         {
-            GameClear();
+            isGameClear = true;
+            if (Input.IsKeyDown(ConsoleKey.Enter))
+            {
+                GoShop?.Invoke();
+            }
+            return;
         }
         UpdateGameObjects(deltaTime);
-        if(Overlap.IsOverlap(player.PlayerRect(player.CurrentDirection), rifleItem.RiflePosition))
+        if (Input.IsKeyDown(ConsoleKey.Tab))
         {
-            player.SetWeapon(new Rifle());
-            RemoveGameObject(rifleItem);
+            if (_player.HasRifle && _player.HasShotgun)
+            {
+                if(_player.Weapon is Rifle)
+                {
+                    _player.SetWeapon(new ShotGun());
+                }
+                else if(_player.Weapon is ShotGun)
+                {
+                    _player.SetWeapon(new Pistol());
+                }
+                else
+                {
+                    _player.SetWeapon(new Rifle());
+                }
+            }
+            else if (_player.HasRifle)
+            {
+                if (_player.Weapon is Rifle)
+                {
+                    _player.SetWeapon(new Pistol());
+                }
+                else
+                {
+                    _player.SetWeapon(new Rifle());
+                }
+            }
+            else if (_player.HasShotgun)
+            {
+                if (_player.Weapon is ShotGun)
+                {
+                    _player.SetWeapon(new Pistol());
+                }
+                else
+                {
+                    _player.SetWeapon(new ShotGun());
+                }
+            }
         }
-        int activeMonsterCount = monsters.Count(m => m.IsActive);
-        if (_random.Next(100) < 3 && activeMonsterCount < 7)
+        int activeItemCount = items.Count(i => i.IsActive);
+        if (activeItemCount == 0)
         {
-            var monster = new Monster(this, player, monsters);
-            monster.Spawn(player.PlayerRect(player.CurrentDirection));
+            var item = new SpeedUpItem(this);
+            item.Spawn(_player.PlayerRect(_player.CurrentDirection));
+            items.Add(item);
+            AddGameObject(item);
+        }
+
+        int activeMonsterCount = monsters.Count(m => m.IsActive);
+        if (_random.Next(100) < 5 && activeMonsterCount < 7)
+        {
+            var monster = new Monster(this, _player, monsters);
+            monster.Spawn(_player.PlayerRect(_player.CurrentDirection));
             monsters.Add(monster);
             AddGameObject(monster);
         }
-        foreach (var monster in monsters)
+        foreach (var item in items)
         {
-            if(Overlap.IsOverlap(player.PlayerRect(player.CurrentDirection), monster.MonsterRect()))
+            if (Overlap.IsOverlap(_player.PlayerRect(_player.CurrentDirection), item.itemRect))
+            {
+                item.PickUpEffect(_player);
+                item.IsActive = false;
+                RemoveGameObject(item);
+            }
+        }
+            foreach (var monster in monsters)
+        {
+            if(Overlap.IsOverlap(_player.PlayerRect(_player.CurrentDirection), monster.MonsterRect()))
             {
                 isGameOver = true;
                 return;
@@ -83,7 +159,7 @@ public class PlayScene : Scene
                     RemoveGameObject(monster);
                     bullet.IsActive = false;
                     RemoveGameObject(bullet);
-                    player.GetGold(10);
+                    _player.GetGold(10);
                 }
             }
         }
@@ -92,14 +168,19 @@ public class PlayScene : Scene
     }
     public override void Draw(ScreenBuffer buffer)
     {
-        buffer.WriteText(0, 0, $"Gold: {Player.Gold}G", ConsoleColor.Yellow);
-        buffer.WriteTextCentered(0, $"현재무기 : {player.Weapon}");
+        buffer.WriteText(0, 0, $"Gold: {(_player.Gold)}G", ConsoleColor.Yellow);
+        buffer.WriteTextCentered(0, $"현재무기 : {_player.Weapon}");
         buffer.WriteText(0, 1, TimeBar(), ConsoleColor.DarkGreen);
         DrawGameObjects(buffer);
         if (isGameOver)
         {
             buffer.WriteTextCentered(13, $"GAME OVER", ConsoleColor.Red);
             buffer.WriteTextCentered(15, "Press ENTER to Retry", ConsoleColor.White);
+        }
+        if (isGameClear)
+        {
+            buffer.WriteTextCentered(13, $"STAGE CLEAR", ConsoleColor.Green);
+            buffer.WriteTextCentered(15, "Press ENTER to continue to the shop", ConsoleColor.White);
         }
     }
     public void CreateBullet(Position body, Direction dir)
@@ -126,9 +207,5 @@ public class PlayScene : Scene
             sb.Append("░");
         }
         return sb.ToString();
-    }
-    public void GameClear()
-    {
-
     }
 }

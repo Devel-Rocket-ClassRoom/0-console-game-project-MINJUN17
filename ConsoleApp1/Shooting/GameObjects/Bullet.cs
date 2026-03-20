@@ -46,14 +46,10 @@ public class Bullet : GameObject
             case Direction.Down: dx = 0; dy = 1; break;
             case Direction.Left: dx = -1; dy = 0; break;
             case Direction.Right: dx = 1; dy = 0; break;
-            case Direction.UpLeft: dx = -1; dy = -1; break;
-            case Direction.UpRight: dx = 1; dy = -1; break;
-            case Direction.DownRight: dx = 1; dy = 1; break;
-            case Direction.DownLeft: dx = -1; dy = 1; break;
         }
         _bulletPosition.X += dx;
         _bulletPosition.Y += dy;
-        if (!Map1.IsInBounds(_bulletPosition.X, _bulletPosition.Y))
+        if (!Map.IsInBounds(_bulletPosition.X, _bulletPosition.Y))
         {
             IsAlive = false;
         }
