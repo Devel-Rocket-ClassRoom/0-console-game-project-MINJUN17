@@ -48,7 +48,14 @@ public class Monster : GameObject
         if (position.Y - _monsterPostion.Y > 0) dy++;
         if (position.Y - _monsterPostion.Y < 0) dy--;
         Position newPosition = new Position(_monsterPostion.X + dx, _monsterPostion.Y + dy);
-        if(_others.Any(m => m != this && m.IsOverlap(newPosition)))
+        Rect newRect = new Rect
+        {
+            X = newPosition.X,
+            Y = newPosition.Y,
+            Width = _monsterWidth,
+            Height = _monsterHeight
+        };
+        if (_others.Any(m => m != this && Overlap.IsOverlap(newRect, m.MonsterRect())))
         {
             return;
         }
@@ -57,7 +64,7 @@ public class Monster : GameObject
             _monsterPostion = newPosition;
         }
     }
-    public void Spawn(Position position)
+    public void Spawn(Rect rect)
     {
         do
         {
@@ -83,18 +90,17 @@ public class Monster : GameObject
                 _monsterPostion.X = Map1.Right - 4;
             }
         }
-        while(IsOverlap(position));
+        while(Overlap.IsOverlap(MonsterRect(), rect));
     }
-    public bool IsOverlap(Position position)
+
+    public Rect MonsterRect()
     {
-        return position.X >= _monsterPostion.X && position.X < _monsterPostion.X + _monsterWidth &&
-           position.Y >= _monsterPostion.Y && position.Y < _monsterPostion.Y + _monsterHeight;
-    }
-    public bool IsHit(Position position)
-    {
-        return position.X >= _monsterPostion.X
-            && position.X < _monsterPostion.X + _monsterWidth
-            && position.Y >= _monsterPostion.Y
-            && position.Y < _monsterPostion.Y + _monsterHeight;
+        return new Rect
+        {
+            X = _monsterPostion.X,
+            Y = _monsterPostion.Y,
+            Width = _monsterWidth,
+            Height = _monsterHeight
+        };
     }
 }

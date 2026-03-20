@@ -6,7 +6,7 @@ public class Pistol : Weapon
 {
     public Pistol()
     {
-        _cooldown = 1.0f;
+        _cooldown = 2.0f;
     }
     public override void Fire(PlayScene scene, Position pos, Direction dir)
     {

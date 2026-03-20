@@ -132,6 +132,17 @@ namespace Framework.Engine
             DrawVLine(x, y + 1, height - 2, '|', color, bgColor);
             DrawVLine(x + width - 1, y + 1, height - 2, '|', color, bgColor);
         }
+        public void DrawBoxNoRightLine(int x, int y, int width, int height, ConsoleColor color = ConsoleColor.Gray, ConsoleColor bgColor = ConsoleColor.Black)
+        {
+            SetCell(x, y, '+', color, bgColor);
+            SetCell(x + width - 1, y, '+', color, bgColor);
+            SetCell(x, y + height - 1, '+', color, bgColor);
+            SetCell(x + width - 1, y + height - 1, '+', color, bgColor);
+
+            DrawHLine(x + 1, y, width - 2, '-', color, bgColor);
+            DrawHLine(x + 1, y + height - 1, width - 2, '-', color, bgColor);
+            DrawVLine(x, y + 1, height - 2, '|', color, bgColor);
+        }
 
         public void FillRect(int x, int y, int width, int height, char ch = ' ', ConsoleColor color = ConsoleColor.Gray, ConsoleColor bgColor = ConsoleColor.Black)
         {

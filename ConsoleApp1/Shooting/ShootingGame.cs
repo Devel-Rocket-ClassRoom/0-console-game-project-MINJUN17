@@ -14,7 +14,7 @@ class ShootingGame : GameApp
     }
     protected override void Initialize()
     {
-        ChangeToTitle();
+        ChaneToShop();
     }
     protected override void Update(float deltaTime)
     {
@@ -30,6 +30,11 @@ class ShootingGame : GameApp
         _scenes.CurrentScene?.Draw(Buffer);
     }
 
+    private void ChaneToShop()
+    {
+        var shop = new ShopScene();
+        _scenes.ChangeScene(shop);
+    }
     private void ChangeToTitle()
     {
         var title = new TitleScene();
@@ -41,6 +46,7 @@ class ShootingGame : GameApp
     {
         var play = new PlayScene();
         play.PlayAgainRequested += ChangeToTitle;
+        play.GameClear
         _scenes.ChangeScene(play);
     }
 }
