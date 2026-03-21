@@ -5,7 +5,7 @@ using System.Text;
 
 public class SpeedUpItem : Item
 {
-    private float _speedMultiply = 3;
+    private float _speedMultiply = 2.1f;
     public SpeedUpItem(Scene scene) : base(scene)
     {
         _buffTime = 5f;

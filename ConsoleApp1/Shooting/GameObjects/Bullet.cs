@@ -5,16 +5,14 @@ using static System.Net.Mime.MediaTypeNames;
 public class Bullet : GameObject
 {
     private Direction _direction;
-    private const float k_MoveInterval = 0.01f;
     private float _moveTimer;
     private Position _bulletPosition;
     public Position BulletPosition => _bulletPosition;
-    public Direction Direction { get; }
     public bool IsAlive { get; private set; }
     public Bullet(Scene scene, Position postion, Direction direction) : base(scene)
     {
         _bulletPosition = postion;
-        Direction = direction;
+        _direction = direction;
 
         _moveTimer = 0;
         IsAlive = true;
@@ -23,13 +21,7 @@ public class Bullet : GameObject
 
     public override void Update(float deltaTime)
     {
-
-        _moveTimer += deltaTime;
-        if (_moveTimer > k_MoveInterval)
-        {
-            Move();
-            _moveTimer = 0;
-        }
+        Move();
         if (!IsAlive)
         {
             Scene.RemoveGameObject(this);
@@ -40,7 +32,7 @@ public class Bullet : GameObject
         int dx = 0;
         int dy = 0;
 
-        switch (Direction)
+        switch (_direction)
         {
             case Direction.Up: dx = 0; dy = -1; break;
             case Direction.Down: dx = 0; dy = 1; break;

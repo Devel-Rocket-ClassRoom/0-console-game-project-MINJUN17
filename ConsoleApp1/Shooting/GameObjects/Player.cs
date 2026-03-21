@@ -36,6 +36,7 @@ public class Player : GameObject
         Weapon = new Pistol();
         _playerPosition = startPosition;
         _moveTimer = 0;
+        _currentMoveInterval = _basemoveInterval;
         CurrentDirection = Direction.Up;
     }
 
@@ -46,12 +47,11 @@ public class Player : GameObject
         {
             Weapon.TryFire((PlayScene)Scene, PlayerPosition, CurrentDirection);
         }
-
         if (_speedBuffTimer > 0)
         {
             _speedBuffTimer -= deltaTime;
 
-            if (_speedBuffTimer <= 0)
+            if (_speedBuffTimer <= 0 && !HasMoveFast)
             {
                 _currentMoveInterval = _basemoveInterval;
             }
@@ -209,21 +209,27 @@ public class Player : GameObject
     public void Reset()
     {
         Gold = 0;
+        _speedBuffTimer = 0;
+        _basemoveInterval = 0.1f;
         Weapon = new Pistol();
         HasRifle = false;
         HasShotgun = false;
         HasMoveFast = false;
+        _currentMoveInterval = _basemoveInterval;
+    }
+    public void SpeedReset()
+    {
+        _speedBuffTimer = 0;
     }
     public void MoveFast(float amount)
     {
-        _basemoveInterval /= amount;
+        _currentMoveInterval = _basemoveInterval / amount;
         HasMoveFast = true;
     }
     public void MoveFast(float amount, float buffTime)
     {
         _currentMoveInterval = _basemoveInterval / amount;
         _speedBuffTimer = buffTime;
-        HasMoveFast = true;
     }
     public void SetPosition(Position position)
     {

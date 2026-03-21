@@ -8,7 +8,6 @@ public class PlayScene : Scene
 {
     private Map map1;
     private Player _player;
-    private RifleItem rifleItem;
     private List<Monster> monsters = new List<Monster>();
     private List<Bullet> bullets = new List<Bullet>();
     private List<Item> items = new List<Item>();
@@ -28,7 +27,7 @@ public class PlayScene : Scene
     }
     public override void Load()
     {
-        
+
         _gameTime = 0f;
         WeaponNumber = 1;
         isGameClear = false;
@@ -38,18 +37,20 @@ public class PlayScene : Scene
 
 
         _player.SetScene(this);
+
+
         if (isGameOver)
         {
-            _player.Reset();
             isGameOver = false;
         }
+
 
 
         Position startPosition = new Position(30, 15);
         _player.SetPosition(startPosition);
         AddGameObject(_player);
 
-        
+
     }
 
     public override void Unload()
@@ -68,9 +69,10 @@ public class PlayScene : Scene
             return;
         }
         _gameTime += deltaTime;
-        if(_gameTime >= _maxTime)
+        if (_gameTime >= _maxTime)
         {
             isGameClear = true;
+            _player.SpeedReset();
             if (Input.IsKeyDown(ConsoleKey.Enter))
             {
                 GoShop?.Invoke();
@@ -82,11 +84,11 @@ public class PlayScene : Scene
         {
             if (_player.HasRifle && _player.HasShotgun)
             {
-                if(_player.Weapon is Rifle)
+                if (_player.Weapon is Rifle)
                 {
                     _player.SetWeapon(new ShotGun());
                 }
-                else if(_player.Weapon is ShotGun)
+                else if (_player.Weapon is ShotGun)
                 {
                     _player.SetWeapon(new Pistol());
                 }
@@ -119,7 +121,7 @@ public class PlayScene : Scene
             }
         }
         int activeItemCount = items.Count(i => i.IsActive);
-        if (activeItemCount == 0)
+        if (activeItemCount == 0 && _gameTime >= _maxTime / 2)
         {
             var item = new SpeedUpItem(this);
             item.Spawn(_player.PlayerRect(_player.CurrentDirection));
@@ -144,10 +146,11 @@ public class PlayScene : Scene
                 RemoveGameObject(item);
             }
         }
-            foreach (var monster in monsters)
+        foreach (var monster in monsters)
         {
-            if(Overlap.IsOverlap(_player.PlayerRect(_player.CurrentDirection), monster.MonsterRect()))
+            if (Overlap.IsOverlap(_player.PlayerRect(_player.CurrentDirection), monster.MonsterRect()))
             {
+                _player.Reset();
                 isGameOver = true;
                 return;
             }
