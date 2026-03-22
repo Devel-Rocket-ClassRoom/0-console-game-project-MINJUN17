@@ -176,7 +176,6 @@ public class BossScene : Scene, IBulletCreator
 
             if (_bosses.Count == 0)
             {
-                // 페이즈 번호를 먼저 올려서 다음 프레임에 재진입 방지
                 _phase = 3;
                 _isPhase3Intro = true;
                 _phase3IntroTimer = 0;
