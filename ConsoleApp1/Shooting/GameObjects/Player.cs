@@ -16,13 +16,13 @@ public class Player : GameObject
     private float _moveTimer;
     private float _speedBuffTimer;
     public Weapon Weapon { get; private set; }
-    private Scene Scene;
+    private Scene _scene;
 
     public Action<Position, Direction> OnFire;
     public int Gold { get; private set; }
 
-    public bool HasRifle {  get; private set; }
-    public bool HasShotgun {  get; private set; }
+    public bool HasRifle { get; private set; }
+    public bool HasShotgun { get; private set; }
     public bool HasMoveFast { get; private set; }
 
     public Player(Scene scene, Position startPosition) : base(scene)
@@ -45,7 +45,10 @@ public class Player : GameObject
         Weapon.Update(deltaTime);
         if (Input.IsKey(ConsoleKey.Spacebar))
         {
-            Weapon.TryFire((PlayScene)Scene, PlayerPosition, CurrentDirection);
+            if (_scene is IBulletCreator creator)
+            {
+                Weapon.TryFire(creator, PlayerPosition, CurrentDirection);
+            }
         }
         if (_speedBuffTimer > 0)
         {
@@ -62,51 +65,79 @@ public class Player : GameObject
             Move();
             _moveTimer = 0f;
         }
-
     }
 
     public override void Draw(ScreenBuffer buffer)
     {
+        // x,y = 몸통 중심 기준점
         int x = _playerPosition.X;
         int y = _playerPosition.Y;
-        if (CurrentDirection == Direction.Down)
+
+        if (CurrentDirection == Direction.Up)
         {
-            buffer.SetCell(x + 1, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 2, y, '█', ConsoleColor.Yellow);
-
-            buffer.SetCell(x, y, '┏', ConsoleColor.Yellow);
-            buffer.SetCell(x, y + 1, '┼', ConsoleColor.DarkGray);
-
+            // row0: 총구
+            buffer.SetCell(x, y - 3, '│', ConsoleColor.DarkGray);
+            // row1: 그립
+            buffer.SetCell(x, y - 2, '╋', ConsoleColor.Gray);
+            // row2: 머리 (눈 입 눈)
+            buffer.SetCell(x - 1, y - 1, '◉', ConsoleColor.Yellow);
+            buffer.SetCell(x, y - 1, '▿', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y - 1, '◉', ConsoleColor.Yellow);
+            // row3: 몸통
+            buffer.SetCell(x - 1, y, '░', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '░', ConsoleColor.Yellow);
+            // row4: 다리
+            buffer.SetCell(x - 1, y + 1, '▐', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y + 1, '▌', ConsoleColor.DarkYellow);
         }
-        else if (CurrentDirection == Direction.Up)
+        else if (CurrentDirection == Direction.Down)
         {
-            buffer.SetCell(x - 2, y, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y, '█', ConsoleColor.Yellow);
-
-            buffer.SetCell(x, y, '┛', ConsoleColor.Yellow);
-            buffer.SetCell(x, y - 1, '┼', ConsoleColor.DarkGray);
+            // row0: 다리
+            buffer.SetCell(x - 1, y - 1, '▐', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y - 1, '▌', ConsoleColor.DarkYellow);
+            // row1: 몸통
+            buffer.SetCell(x - 1, y, '░', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '░', ConsoleColor.Yellow);
+            // row2: 머리 (눈 입 눈)
+            buffer.SetCell(x - 1, y + 1, '◉', ConsoleColor.Yellow);
+            buffer.SetCell(x, y + 1, '△', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y + 1, '◉', ConsoleColor.Yellow);
+            // row3: 그립
+            buffer.SetCell(x, y + 2, '╋', ConsoleColor.Gray);
+            // row4: 총구
+            buffer.SetCell(x, y + 3, '│', ConsoleColor.DarkGray);
         }
         else if (CurrentDirection == Direction.Left)
         {
-            buffer.SetCell(x, y + 1, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y + 1, '█', ConsoleColor.Yellow);
-
-            buffer.SetCell(x, y, '┓', ConsoleColor.Yellow);
-            buffer.SetCell(x - 1, y, '━', ConsoleColor.Yellow);
-
-            buffer.SetCell(x - 2, y, '┼', ConsoleColor.DarkGray);
+            // row0: 머리 (입 눈)
+            buffer.SetCell(x, y - 1, '▿', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y - 1, '◉', ConsoleColor.Yellow);
+            // row1: 총구 + 총열 + 그립 + 몸통
             buffer.SetCell(x - 3, y, '─', ConsoleColor.DarkGray);
+            buffer.SetCell(x - 2, y, '━', ConsoleColor.Gray);
+            buffer.SetCell(x - 1, y, '╋', ConsoleColor.Gray);
+            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '░', ConsoleColor.Yellow);
+            // row2: 다리
+            buffer.SetCell(x, y + 1, '▐', ConsoleColor.DarkYellow);
+            buffer.SetCell(x + 1, y + 1, '▌', ConsoleColor.DarkYellow);
         }
         else if (CurrentDirection == Direction.Right)
         {
-            buffer.SetCell(x, y - 1, '█', ConsoleColor.Yellow);
-            buffer.SetCell(x + 1, y - 1, '█', ConsoleColor.Yellow);
-
-            buffer.SetCell(x, y, '┗', ConsoleColor.Yellow);
-            buffer.SetCell(x + 1, y, '━', ConsoleColor.Yellow);
-
+            // row0: 머리 (눈 입)
+            buffer.SetCell(x - 1, y - 1, '◉', ConsoleColor.Yellow);
+            buffer.SetCell(x, y - 1, '▿', ConsoleColor.DarkYellow);
+            // row1: 몸통 + 그립 + 총열 + 총구
+            buffer.SetCell(x - 1, y, '░', ConsoleColor.Yellow);
+            buffer.SetCell(x, y, '█', ConsoleColor.Yellow);
+            buffer.SetCell(x + 1, y, '╋', ConsoleColor.Gray);
+            buffer.SetCell(x + 2, y, '━', ConsoleColor.Gray);
             buffer.SetCell(x + 3, y, '─', ConsoleColor.DarkGray);
-            buffer.SetCell(x + 2, y, '┼', ConsoleColor.DarkGray);
+            // row2: 다리
+            buffer.SetCell(x - 1, y + 1, '▐', ConsoleColor.DarkYellow);
+            buffer.SetCell(x, y + 1, '▌', ConsoleColor.DarkYellow);
         }
     }
 
@@ -134,10 +165,11 @@ public class Player : GameObject
         }
         _playerPosition = nextPosition;
     }
+
     public void SetWeapon(Weapon weapon)
     {
         Weapon = weapon;
-        if(weapon is Rifle)
+        if (weapon is Rifle)
         {
             HasRifle = true;
         }
@@ -146,66 +178,72 @@ public class Player : GameObject
             HasShotgun = true;
         }
     }
+
     public Rect PlayerRect(Direction direction)
     {
+        // 몸통(3x3) 영역만 히트박스 (총 제외)
         switch (direction)
         {
             case Direction.Up:
                 return new Rect
                 {
-                    X = _playerPosition.X - 2,
-                    Y = _playerPosition.Y,
-                    Width = 3,  
-                    Height = 1
+                    X = _playerPosition.X - 1,
+                    Y = _playerPosition.Y - 1,
+                    Width = 3,
+                    Height = 3
                 };
 
             case Direction.Down:
                 return new Rect
                 {
-                    X = _playerPosition.X,
-                    Y = _playerPosition.Y,
-                    Width = 3,  
-                    Height = 1
+                    X = _playerPosition.X - 1,
+                    Y = _playerPosition.Y - 1,
+                    Width = 3,
+                    Height = 3
                 };
 
             case Direction.Left:
                 return new Rect
                 {
-                    X = _playerPosition.X - 1,
-                    Y = _playerPosition.Y,
-                    Width = 2,  
-                    Height = 2  
+                    X = _playerPosition.X,
+                    Y = _playerPosition.Y - 1,
+                    Width = 2,
+                    Height = 3
                 };
 
             case Direction.Right:
                 return new Rect
                 {
-                    X = _playerPosition.X,
+                    X = _playerPosition.X - 1,
                     Y = _playerPosition.Y - 1,
-                    Width = 2,  
-                    Height = 2 
+                    Width = 2,
+                    Height = 3
                 };
 
             default:
                 return new Rect();
         }
     }
+
     public void GetGold(int amount)
     {
         Gold += amount;
     }
+
     public void SpendGold(int amount)
     {
-        if(Gold < amount)
+        if (Gold < amount)
         {
             return;
         }
         Gold -= amount;
     }
+
     public void SetScene(Scene scene)
     {
-        this.Scene = scene;
+        this._scene = scene;
     }
+
     public void Reset()
     {
         Gold = 0;
@@ -217,20 +255,24 @@ public class Player : GameObject
         HasMoveFast = false;
         _currentMoveInterval = _basemoveInterval;
     }
+
     public void SpeedReset()
     {
         _speedBuffTimer = 0;
     }
+
     public void MoveFast(float amount)
     {
         _currentMoveInterval = _basemoveInterval / amount;
         HasMoveFast = true;
     }
+
     public void MoveFast(float amount, float buffTime)
     {
         _currentMoveInterval = _basemoveInterval / amount;
         _speedBuffTimer = buffTime;
     }
+
     public void SetPosition(Position position)
     {
         _playerPosition = position;

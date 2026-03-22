@@ -25,18 +25,24 @@ public abstract class Item : GameObject
 
     public override void Draw(ScreenBuffer buffer)
     {
-        
+
     }
     public void Spawn(Rect rect)
     {
+        // 중앙 영역에만 스폰 (빨간 스폰존 안쪽으로)
+        int innerLeft = Map.Left + 8;
+        int innerRight = Map.Right - 8;
+        int innerTop = Map.Top + 4;
+        int innerBottom = Map.Bottom - 4;
+
         do
         {
             itemRect = new Rect()
             {
                 Width = 6,
                 Height = 3,
-                X = _random.Next(Map.Left, Map.Right + 1),
-                Y = _random.Next(Map.Top, Map.Bottom + 1)
+                X = _random.Next(innerLeft, innerRight - 5),
+                Y = _random.Next(innerTop, innerBottom - 2)
             };
         }
         while (

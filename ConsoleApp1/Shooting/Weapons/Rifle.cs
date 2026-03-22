@@ -8,8 +8,8 @@ public class Rifle : Weapon
     {
         _cooldown = 0.3f;
     }
-    public override void Fire(PlayScene scene, Position pos, Direction dir)
+    public override void Fire(IBulletCreator creator, Position pos, Direction dir)
     {
-        scene.CreateBullet(pos, dir);
+        creator.CreateBullet(pos, dir);
     }
 }

@@ -24,6 +24,7 @@ public class Bullet : GameObject
         Move();
         if (!IsAlive)
         {
+            IsActive = false;
             Scene.RemoveGameObject(this);
         }
     }

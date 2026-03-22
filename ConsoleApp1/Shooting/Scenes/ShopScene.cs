@@ -6,14 +6,18 @@ using System.Text;
 public class ShopScene : Scene
 {
     public event GameAction NextStage;
+    public event GameAction GoBoss;
     private int _productNumber;
-    private int _left = 3;
-    private int _right = 50;
-    private int _topOffset = 2;
     private Player _player;
     private bool _noMoney1;
     private bool _noMoney2;
     private bool _noMoney3;
+    private bool _boughtThisVisit;
+
+    private const int BoxX = 3;
+    private const int BoxW = 30;
+    private const int BoxH = 4;
+    private const int Gap = 1;
 
     public ShopScene(Player player)
     {
@@ -22,46 +26,39 @@ public class ShopScene : Scene
         _noMoney1 = false;
         _noMoney2 = false;
         _noMoney3 = false;
-    }
-    public override void Load()
-    {
+        _boughtThisVisit = false;
     }
 
-    public override void Unload()
-    {
-    }
+    public override void Load() { }
+    public override void Unload() { }
 
     public override void Update(float deltaTime)
     {
         if (Input.IsKeyDown(ConsoleKey.DownArrow))
         {
             _productNumber++;
-            if( _productNumber > 3)
-            {
-                _productNumber = 1;
-            } 
+            if (_productNumber > 3) _productNumber = 1;
         }
         if (Input.IsKeyDown(ConsoleKey.UpArrow))
         {
             _productNumber--;
-            if (_productNumber < 1)
-            {
-                _productNumber = 3;
-            }
+            if (_productNumber < 1) _productNumber = 3;
         }
         if (Input.IsKeyDown(ConsoleKey.Enter))
         {
-            if(_productNumber == 1 && !_player.HasRifle)
+            _noMoney1 = false;
+            _noMoney2 = false;
+            _noMoney3 = false;
+
+            if (_productNumber == 1 && !_player.HasRifle)
             {
-                if(_player.Gold >= 50)
+                if (_player.Gold >= 50)
                 {
                     _player.SetWeapon(new Rifle());
                     _player.SpendGold(50);
+                    _boughtThisVisit = true;
                 }
-                else
-                {
-                    _noMoney1 = true;
-                }
+                else { _noMoney1 = true; }
             }
             if (_productNumber == 2 && !_player.HasShotgun)
             {
@@ -69,11 +66,9 @@ public class ShopScene : Scene
                 {
                     _player.SetWeapon(new ShotGun());
                     _player.SpendGold(50);
+                    _boughtThisVisit = true;
                 }
-                else
-                {
-                    _noMoney2 = true;
-                }
+                else { _noMoney2 = true; }
             }
             if (_productNumber == 3 && !_player.HasMoveFast)
             {
@@ -81,119 +76,84 @@ public class ShopScene : Scene
                 {
                     _player.MoveFast(2);
                     _player.SpendGold(50);
+                    _boughtThisVisit = true;
                 }
-                else
-                {
-                    _noMoney3 = true;
-                }
+                else { _noMoney3 = true; }
             }
         }
-        if (Input.IsKeyDown(ConsoleKey.Tab))
+        if (Input.IsKeyDown(ConsoleKey.S))
         {
             NextStage?.Invoke();
         }
+        if (Input.IsKeyDown(ConsoleKey.Y))
+        {
+            GoBoss?.Invoke();
+        }
     }
+
     public override void Draw(ScreenBuffer buffer)
     {
-        buffer.WriteText(_left + 3, 1, $"현재 골드:");
-        buffer.WriteText(_left + 10, 1, $"{_player.Gold}G", ConsoleColor.DarkYellow);
-        buffer.DrawBoxNoRightLine(_left, 1 + _topOffset, 30, 5, ConsoleColor.White);
-        buffer.SetCell(27, 2 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(32, 3 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(24, 4 + _topOffset, '|', ConsoleColor.White);
-        buffer.WriteText(_left + 3, 2 + _topOffset, "라이플(무기)");
-        buffer.WriteText(_left + 12, 2 + _topOffset, "500G", ConsoleColor.DarkYellow);
-        buffer.WriteText(_left + 3, 4 + _topOffset, "특징: 공격속도 빠름");
+        // 상단 골드
+        buffer.WriteText(BoxX + 1, 1, "Gold:", ConsoleColor.Gray);
+        buffer.WriteText(BoxX + 7, 1, $"{_player.Gold}G", ConsoleColor.DarkYellow);
 
-        buffer.DrawBoxNoRightLine(_left, 7 + _topOffset, 30, 5, ConsoleColor.White);
-        buffer.WriteText(_left + 3, 8 + _topOffset, "샷건(무기)");
-        buffer.WriteText(_left + 12, 8 + _topOffset, "800G", ConsoleColor.DarkYellow);
-        buffer.WriteText(_left + 3, 10 + _topOffset, "특징: 세발씩 발사됨");
-        buffer.SetCell(28, 8 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(32, 9 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(24, 10 + _topOffset, '|', ConsoleColor.White);
+        // 아이템 박스 3개
+        int y1 = 3;
+        int y2 = y1 + BoxH + Gap;
+        int y3 = y2 + BoxH + Gap;
 
-        buffer.DrawBoxNoRightLine(_left, 13 + _topOffset, 30, 5, ConsoleColor.White);
-        buffer.WriteText(_left + 3, 14 + _topOffset, "달리기(패시브)");
-        buffer.WriteText(_left + 12, 14 + _topOffset, "300G", ConsoleColor.DarkYellow);
-        buffer.WriteText(_left + 3, 16 + _topOffset, "특징: 달리기 빨라짐");
-        buffer.SetCell(26, 14 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(32, 15 + _topOffset, '|', ConsoleColor.White);
-        buffer.SetCell(24, 16 + _topOffset, '|', ConsoleColor.White);
+        DrawItemBox(buffer, BoxX, y1, "Rifle", "50G", "Fast fire rate", _player.HasRifle, _productNumber == 1);
+        DrawItemBox(buffer, BoxX, y2, "Shotgun", "50G", "Fires 3 bullets", _player.HasShotgun, _productNumber == 2);
+        DrawItemBox(buffer, BoxX, y3, "Sprint", "50G", "Move faster", _player.HasMoveFast, _productNumber == 3);
 
-        buffer.WriteText(3, 19 + _topOffset, "    /\\_/\\");
-        buffer.WriteText(3, 20 + _topOffset, "   ( o o )");
-        buffer.WriteText(3, 21 + _topOffset, "  (  =^= )");
-        buffer.WriteText(15, 20 + _topOffset, "돈내놔");
+        // 고양이 상인
+        int catY = 20;
+        buffer.WriteText(3, catY, "    /\\_/\\", ConsoleColor.White);
+        buffer.WriteText(3, catY + 1, "   ( o o )", ConsoleColor.White);
+        buffer.WriteText(3, catY + 2, "  (  =^=  )", ConsoleColor.White);
 
-        buffer.WriteText(26, 19 + _topOffset, "방향키: 구매아이템 변경",ConsoleColor.Yellow);
-        buffer.WriteText(23, 20 + _topOffset, "Enter : 아이템 구매", ConsoleColor.Green);
-        buffer.WriteText(26, 21 + _topOffset, "Tab   : 상점 나가기", ConsoleColor.Red);
-
-        if (_player.HasRifle)
-        {
-            buffer.WriteText(40, 3 + _topOffset, "구입 완료");
-            buffer.WriteText(15, 20 + _topOffset, "감사요");
-        }
-        if (_player.HasShotgun)
-        {
-            buffer.WriteText(40, 9 + _topOffset, "구입 완료");
-            buffer.WriteText(15, 20 + _topOffset, "감사요");
-        }
-        if (_player.HasMoveFast)
-        {
-            buffer.WriteText(40, 15 + _topOffset, "구입 완료");
-            buffer.WriteText(15, 20 + _topOffset, "감사요");
-        }
-
+        // 고양이 대사
+        string catMsg = "Pay up!";
+        if (_boughtThisVisit)
+            catMsg = "Thanks!";
         if (_noMoney1 || _noMoney2 || _noMoney3)
+            catMsg = "No money!";
+        buffer.WriteText(16, catY + 1, catMsg, (_noMoney1 || _noMoney2 || _noMoney3) ? ConsoleColor.Red : ConsoleColor.White);
+
+        // 조작법 (하단)
+        int helpX = 25;
+        int helpY = 24;
+        buffer.WriteText(helpX, helpY, "ARROW  Select item", ConsoleColor.Yellow);
+        buffer.WriteText(helpX, helpY + 1, "ENTER  Buy item", ConsoleColor.Green);
+        buffer.WriteText(helpX, helpY + 2, "S      Back to battle", ConsoleColor.Cyan);
+        buffer.WriteText(helpX, helpY + 3, "Y      Boss fight!", ConsoleColor.Red);
+    }
+
+    private void DrawItemBox(ScreenBuffer buffer, int x, int y, string name, string price, string desc, bool sold, bool selected)
+    {
+        ConsoleColor boxColor = selected ? ConsoleColor.White : ConsoleColor.DarkGray;
+        ConsoleColor bgColor = selected ? ConsoleColor.DarkGray : ConsoleColor.Black;
+
+        // DrawBox로 테두리
+        buffer.DrawBox(x, y, BoxW, BoxH, boxColor);
+
+        // 선택된 아이템이면 내부 배경 채우기
+        if (selected)
         {
-            buffer.WriteText(15, 20 + _topOffset, "돈 벌어",ConsoleColor.Red);
+            buffer.FillRect(x + 1, y + 1, BoxW - 2, BoxH - 2, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
         }
 
+        // 이름 + 가격
+        buffer.WriteText(x + 2, y + 1, name, ConsoleColor.White, bgColor);
+        buffer.WriteText(x + BoxW - price.Length - 2, y + 1, price, ConsoleColor.DarkYellow, bgColor);
 
-        if (_productNumber == 1)
+        // 설명
+        buffer.WriteText(x + 2, y + 2, desc, ConsoleColor.Gray, bgColor);
+
+        // 구매 완료 표시
+        if (sold)
         {
-            buffer.FillRect(_left+1, 2 + _topOffset, 21, 3, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 2 + _topOffset, 2, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 3 + _topOffset, 7, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-
-
-            
-            buffer.SetCell(27, 2 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(32, 3 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(24, 4 + _topOffset, '|', ConsoleColor.White);
-            buffer.WriteText(_left + 3, 2 + _topOffset, "라이플(무기)", bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 12, 2 + _topOffset, "500G", ConsoleColor.DarkYellow, bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 3, 4 + _topOffset, "특징: 공격속도 빠름", bgColor: ConsoleColor.DarkGray);
+            buffer.WriteText(x + BoxW + 2, y + 1, "SOLD", ConsoleColor.Green);
         }
-        else if(_productNumber == 2)
-        {
-            buffer.FillRect(_left + 1, 8 + _topOffset, 21, 3, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 8 + _topOffset, 3, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 9 + _topOffset, 7, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-
-            buffer.WriteText(_left + 3, 8 + _topOffset, "샷건(무기)", bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 12, 8 + _topOffset, "800G", ConsoleColor.DarkYellow, bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 3, 10 + _topOffset, "특징: 세발씩 발사됨", bgColor: ConsoleColor.DarkGray);
-            buffer.SetCell(28, 8 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(32, 9 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(24, 10 + _topOffset, '|', ConsoleColor.White);
-        }
-        else if(_productNumber == 3)
-        {
-            buffer.FillRect(_left + 1, 14 + _topOffset, 21, 3, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 14 + _topOffset, 2, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-            buffer.FillRect(25, 15 + _topOffset, 7, 1, ' ', ConsoleColor.Gray, ConsoleColor.DarkGray);
-
-            buffer.WriteText(_left + 3, 14 + _topOffset, "달리기(패시브)", bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 12, 14 + _topOffset, "300G", ConsoleColor.DarkYellow, bgColor: ConsoleColor.DarkGray);
-            buffer.WriteText(_left + 3, 16 + _topOffset, "특징: 달리기 빨라짐", bgColor: ConsoleColor.DarkGray);
-            buffer.SetCell(26, 14 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(32, 15 + _topOffset, '|', ConsoleColor.White);
-            buffer.SetCell(24, 16 + _topOffset, '|', ConsoleColor.White);
-        }
-
     }
 }
-

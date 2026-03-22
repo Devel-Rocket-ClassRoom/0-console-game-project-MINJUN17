@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
-public class PlayScene : Scene
+public class PlayScene : Scene, IBulletCreator
 {
     private Map map1;
     private Player _player;
@@ -27,7 +27,6 @@ public class PlayScene : Scene
     }
     public override void Load()
     {
-
         _gameTime = 0f;
         WeaponNumber = 1;
         isGameClear = false;
@@ -35,22 +34,16 @@ public class PlayScene : Scene
         map1 = new Map(this);
         AddGameObject(map1);
 
-
         _player.SetScene(this);
-
 
         if (isGameOver)
         {
             isGameOver = false;
         }
 
-
-
         Position startPosition = new Position(30, 15);
         _player.SetPosition(startPosition);
         AddGameObject(_player);
-
-
     }
 
     public override void Unload()
@@ -85,43 +78,29 @@ public class PlayScene : Scene
             if (_player.HasRifle && _player.HasShotgun)
             {
                 if (_player.Weapon is Rifle)
-                {
                     _player.SetWeapon(new ShotGun());
-                }
                 else if (_player.Weapon is ShotGun)
-                {
                     _player.SetWeapon(new Pistol());
-                }
                 else
-                {
                     _player.SetWeapon(new Rifle());
-                }
             }
             else if (_player.HasRifle)
             {
                 if (_player.Weapon is Rifle)
-                {
                     _player.SetWeapon(new Pistol());
-                }
                 else
-                {
                     _player.SetWeapon(new Rifle());
-                }
             }
             else if (_player.HasShotgun)
             {
                 if (_player.Weapon is ShotGun)
-                {
                     _player.SetWeapon(new Pistol());
-                }
                 else
-                {
                     _player.SetWeapon(new ShotGun());
-                }
             }
         }
         int activeItemCount = items.Count(i => i.IsActive);
-        if (activeItemCount == 0 && _gameTime >= _maxTime / 2)
+        if (activeItemCount == 0 && items.Count == 0 && _gameTime >= _maxTime / 2)
         {
             var item = new SpeedUpItem(this);
             item.Spawn(_player.PlayerRect(_player.CurrentDirection));
@@ -148,6 +127,8 @@ public class PlayScene : Scene
         }
         foreach (var monster in monsters)
         {
+            if (!monster.IsActive) continue;
+
             if (Overlap.IsOverlap(_player.PlayerRect(_player.CurrentDirection), monster.MonsterRect()))
             {
                 _player.Reset();
@@ -156,6 +137,8 @@ public class PlayScene : Scene
             }
             foreach (var bullet in bullets)
             {
+                if (!bullet.IsActive) continue;
+
                 if (Overlap.IsOverlap(monster.MonsterRect(), bullet.BulletPosition))
                 {
                     monster.IsActive = false;
@@ -163,6 +146,7 @@ public class PlayScene : Scene
                     bullet.IsActive = false;
                     RemoveGameObject(bullet);
                     _player.GetGold(10);
+                    break; // 이 몬스터는 죽었으니 다음 총알 체크 불필요
                 }
             }
         }
@@ -172,9 +156,33 @@ public class PlayScene : Scene
     public override void Draw(ScreenBuffer buffer)
     {
         buffer.WriteText(0, 0, $"Gold: {(_player.Gold)}G", ConsoleColor.Yellow);
-        buffer.WriteTextCentered(0, $"현재무기 : {_player.Weapon}");
+        buffer.WriteTextCentered(0, $"WPN: {_player.Weapon}");
         buffer.WriteText(0, 1, TimeBar(), ConsoleColor.DarkGreen);
-        DrawGameObjects(buffer);
+
+        // 맵 먼저
+        map1.Draw(buffer);
+
+        // 아이템 (맵 위, 몬스터 아래)
+        foreach (var item in items)
+        {
+            if (item.IsActive) item.Draw(buffer);
+        }
+
+        // 몬스터 (아이템 위에 덮어씌움)
+        foreach (var monster in monsters)
+        {
+            if (monster.IsActive) monster.Draw(buffer);
+        }
+
+        // 총알
+        foreach (var bullet in bullets)
+        {
+            if (bullet.IsActive) bullet.Draw(buffer);
+        }
+
+        // 플레이어 (맨 위)
+        _player.Draw(buffer);
+
         if (isGameOver)
         {
             buffer.WriteTextCentered(13, $"GAME OVER", ConsoleColor.Red);
@@ -204,7 +212,6 @@ public class PlayScene : Scene
         {
             sb.Append("█");
         }
-
         for (int i = filled; i < maxBar; i++)
         {
             sb.Append("░");

@@ -8,12 +8,12 @@ public class Pistol : Weapon
     {
         _cooldown = 2.0f;
     }
-    public override void Fire(PlayScene scene, Position pos, Direction dir)
+    public override void Fire(IBulletCreator creator, Position pos, Direction dir)
     {
-        if (scene == null)
+        if (creator == null)
         {
             throw new Exception("scene null임");
         }
-        scene.CreateBullet(pos, dir);
+        creator.CreateBullet(pos, dir);
     }
 }
